@@ -11,21 +11,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# OpenAI API Key 设置
+# OpenAI APIキーの設定
 OPENAI_API_KEY = os.environ['OPEN_API_KEY']
 openai.api_key = OPENAI_API_KEY
 
-# 事件存储目录
+# イベントの保存ディレクトリ
 EVENT_DIR = "events"
 os.makedirs(EVENT_DIR, exist_ok=True)
 
 
 def extract_event_info(email_content):
-    """使用 OpenAI 解析邮件内容，提取活动信息"""
+    """OpenAIを使用してメール内容を解析し、イベント情報を抽出する"""
     client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
     prompt = f"""
-    あなたはメールの内容を解析し、イベント情報を抽出する AI アシスタントです。
+    あなたはメールの内容を解析し、イベント情報を抽出するAIアシスタントです。
     
     以下のメールの内容からイベント情報を抽出してください：
     {email_content}
@@ -34,7 +34,7 @@ def extract_event_info(email_content):
     - もしメールがイベントと無関係なら、"not_event" と出力してください。
     - メールにある時間は日本標準時 (JST) です。つまりZ+9です。
     - 終了時間が明示されていない場合、開始時間の一時間後としてください。
-    - イベントの場合、次の JSON フォーマットで出力してください：
+    - イベントの場合、次のJSONフォーマットで出力してください：
       {{
         "title": "イベント名",
         "start_time": "YYYY-MM-DD HH:MM",
@@ -47,7 +47,7 @@ def extract_event_info(email_content):
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": "あなたはイベント解析 AI です。"},
+            {"role": "system", "content": "あなたはイベント解析AIです。"},
             {"role": "user", "content": prompt}
         ]
     )
@@ -60,15 +60,15 @@ def extract_event_info(email_content):
     try:
         event_info = json.loads(content)
 
-        # **修正日期格式**
+        # **日付フォーマットの修正**
         def fix_date_format(date_str):
-            # 确保日期是 YYYY-MM-DD HH:mm
+            # 日付がYYYY-MM-DD HH:mm形式であることを確認
             match = re.match(
                 r"(\d{4})-(\d{1,2})-(\d{1,2}) (\d{2}):(\d{2})", date_str)
             if match:
-                return date_str  # 格式正确
+                return date_str  # 形式が正しい場合
 
-            # 处理 `YYYY-MM-15 HH:MM` 这种错误格式
+            # `YYYY-MM-15 HH:MM`のような誤った形式を処理
             parts = date_str.split()
             if len(parts) == 2:
                 date_part, time_part = parts
@@ -76,30 +76,30 @@ def extract_event_info(email_content):
 
                 if len(date_parts) == 3:
                     year, month, day = date_parts
-                    if not day.isdigit() or int(day) > 31:  # 可能是 AI 误识别
-                        day = "01"  # 默认设为 1 号
+                    if not day.isdigit() or int(day) > 31:  # AIの誤認識の可能性
+                        day = "01"  # デフォルトで1日に設定
                     corrected_date = f"{year}-{month.zfill(2)}-{day.zfill(2)} {time_part}"
                     return corrected_date
 
-            return date_str  # 无法修正，原样返回
+            return date_str  # 修正できない場合はそのまま返す
 
         event_info["start_time"] = fix_date_format(event_info["start_time"])
         event_info["end_time"] = fix_date_format(event_info["end_time"])
 
-        # **检查日期是否有效**
+        # **日付の有効性チェック**
         try:
             arrow.get(event_info["start_time"], "YYYY-MM-DD HH:mm")
             arrow.get(event_info["end_time"], "YYYY-MM-DD HH:mm")
         except arrow.parser.ParserError:
-            return None  # 如果时间仍然无法解析，则返回 None
+            return None  # 時間が解析できない場合はNoneを返す
 
         return event_info
     except json.JSONDecodeError:
-        return None  # 解析失败返回 None
+        return None  # 解析失敗時はNoneを返す
 
 
 def create_ics_file(event_info):
-    """根据活动信息生成 .ics 文件"""
+    """イベント情報に基づいて.icsファイルを生成する"""
     cal = ics.Calendar()
     event = ics.Event()
     event.name = event_info["title"]
@@ -121,7 +121,7 @@ def create_ics_file(event_info):
 # Streamlit UI
 st.title("📅 メールからイベントを抽出")
 
-st.write("📩 メールの内容を入力してください。イベント情報を解析し、カレンダー用の .ics ファイルを生成します。")
+st.write("📩 メールの内容を入力してください。イベント情報を解析し、カレンダー用の.icsファイルを生成します。")
 
 email_content = st.text_area("✉️ メール内容を入力", height=200)
 
@@ -138,10 +138,10 @@ if st.button("解析を開始"):
             st.write(f"**📍 場所:** {event_info['location']}")
             st.write(f"**📝 説明:** {event_info['description']}")
 
-            # 生成 .ics 文件
+            # .icsファイルの生成
             ics_path = create_ics_file(event_info)
             st.download_button(
-                label="📥 カレンダーに追加 (.ics ファイルをダウンロード)",
+                label="📥 カレンダーに追加 (.icsファイルをダウンロード)",
                 data=open(ics_path, "rb"),
                 file_name="event.ics",
                 mime="text/calendar"
