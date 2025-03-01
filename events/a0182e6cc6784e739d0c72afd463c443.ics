@@ -1,0 +1,12 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:ics.py - http://git.io/lLljaA
+BEGIN:VEVENT
+DESCRIPTION:グリーホールディングス株式会社の新卒採用イベント。ご予約状況は、マイページ左側選考情報内よりご確認いただけます。オンラインでの開催の場合は、接続確認のためお電話でご連絡する場合がございます。当日お会いできることを楽しみにしております。
+DTEND:20250226T143000Z
+LOCATION:オンライン
+DTSTART:20250226T133000Z
+SUMMARY:グリーホールディングス株式会社新卒採用イベント
+UID:e04909a1-22c7-45b5-9c19-1100cd136020@e049.org
+END:VEVENT
+END:VCALENDAR

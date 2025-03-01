@@ -1,0 +1,12 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:ics.py - http://git.io/lLljaA
+BEGIN:VEVENT
+DESCRIPTION:予約番号2003 で名古屋からのぞみ76号による品川への新幹線の乗車が予約されています。乗車日は2025年3月2日、乗車位置は16号車9番B席です。乗車にはICカードが必要で、詳細な乗車方法はスマートEXホームページで確認できます。
+DTEND:20250302T101700Z
+LOCATION:名古屋から品川
+DTSTART:20250302T084900Z
+SUMMARY:名古屋から品川への新幹線の乗車
+UID:f37997ca-8441-4c85-8cf2-ec6eb312a909@f379.org
+END:VEVENT
+END:VCALENDAR

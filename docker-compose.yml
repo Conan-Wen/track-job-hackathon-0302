@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: track-job-hackathon-0302
+    env_file: .env
+    ports:
+      - '8501:8501'
+    volumes:
+      - .:/track-job-hackathon-0302
