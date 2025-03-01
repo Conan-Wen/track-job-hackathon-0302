@@ -99,26 +99,6 @@ def extract_event_info(email_content):
     except json.JSONDecodeError:
         return None  # 解析失敗時はNoneを返す
 
-
-# def create_ics_file(event_info):
-#     """イベント情報に基づいて.icsファイルを生成する"""
-#     cal = ics.Calendar()
-#     event = ics.Event()
-#     event.name = event_info["title"]
-#     event.begin = event_info["start_time"]
-#     event.end = event_info["end_time"]
-#     event.location = event_info["location"]
-#     event.description = event_info["description"]
-#     cal.events.add(event)
-
-#     file_name = f"{uuid.uuid4().hex}.ics"
-#     file_path = os.path.join(EVENT_DIR, file_name)
-
-#     with open(file_path, "w") as f:
-#         f.writelines(cal)
-
-#     return file_path
-
 def create_ics_file(event_info):
     """イベント情報から .ics ファイルを生成 (JST タイムゾーン対応)"""
     cal = Calendar()
