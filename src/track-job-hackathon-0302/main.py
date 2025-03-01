@@ -8,6 +8,8 @@ import os
 import uuid
 from datetime import datetime
 from dotenv import load_dotenv
+import pytz  # タイムゾーンを扱うライブラリ
+from ics import Calendar, Event
 
 load_dotenv()
 
@@ -98,15 +100,42 @@ def extract_event_info(email_content):
         return None  # 解析失敗時はNoneを返す
 
 
+# def create_ics_file(event_info):
+#     """イベント情報に基づいて.icsファイルを生成する"""
+#     cal = ics.Calendar()
+#     event = ics.Event()
+#     event.name = event_info["title"]
+#     event.begin = event_info["start_time"]
+#     event.end = event_info["end_time"]
+#     event.location = event_info["location"]
+#     event.description = event_info["description"]
+#     cal.events.add(event)
+
+#     file_name = f"{uuid.uuid4().hex}.ics"
+#     file_path = os.path.join(EVENT_DIR, file_name)
+
+#     with open(file_path, "w") as f:
+#         f.writelines(cal)
+
+#     return file_path
+
 def create_ics_file(event_info):
-    """イベント情報に基づいて.icsファイルを生成する"""
-    cal = ics.Calendar()
-    event = ics.Event()
+    """イベント情報から .ics ファイルを生成 (JST タイムゾーン対応)"""
+    cal = Calendar()
+    event = Event()
     event.name = event_info["title"]
-    event.begin = event_info["start_time"]
-    event.end = event_info["end_time"]
+    
+    # JST (UTC+9) タイムゾーンを指定
+    jst = pytz.timezone("Asia/Tokyo")
+    
+    start_time = arrow.get(event_info["start_time"], "YYYY-MM-DD HH:mm").replace(tzinfo=jst)
+    end_time = arrow.get(event_info["end_time"], "YYYY-MM-DD HH:mm").replace(tzinfo=jst)
+
+    event.begin = start_time.format("YYYY-MM-DDTHH:mm:ssZZ")  # ISO 8601 フォーマット
+    event.end = end_time.format("YYYY-MM-DDTHH:mm:ssZZ")  # ISO 8601 フォーマット
     event.location = event_info["location"]
     event.description = event_info["description"]
+    
     cal.events.add(event)
 
     file_name = f"{uuid.uuid4().hex}.ics"
@@ -116,7 +145,6 @@ def create_ics_file(event_info):
         f.writelines(cal)
 
     return file_path
-
 
 # Streamlit UI
 st.title("📅 メールからイベントを抽出")
