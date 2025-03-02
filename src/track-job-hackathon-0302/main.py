@@ -23,6 +23,9 @@ os.makedirs(EVENT_DIR, exist_ok=True)
 
 
 def extract_event_info(email_content):
+    # 現在の年度を取得 (4月以降は次の年度)
+    current_year = datetime.now().year
+    
     """OpenAIを使用してメール内容を解析し、イベント情報を抽出する"""
     client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
@@ -35,6 +38,7 @@ def extract_event_info(email_content):
     ルール：
     - もしメールがイベントと無関係なら、"not_event" と出力してください。
     - メールにある時間は日本標準時 (JST) です。つまりZ+9です。
+    - 年度が省略されている場合の年度は、イベントの日付が現在の日付よりも遅れている場合は{int(current_year)+1}、進んでいる場合は{current_year}としてください。
     - 終了時間が明示されていない場合、開始時間の一時間後としてください。
     - イベントの場合、次のJSONフォーマットで出力してください：
       {{
@@ -61,8 +65,8 @@ def extract_event_info(email_content):
 
     try:
         event_info = json.loads(content)
-
-        # **日付フォーマットの修正**
+        # **日付フォーマットの修正し、年度の記載のない場合には、補完する**
+        current_year = datetime.now().year
         def fix_date_format(date_str):
             # 日付がYYYY-MM-DD HH:mm形式であることを確認
             match = re.match(
