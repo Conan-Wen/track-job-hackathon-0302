@@ -27,7 +27,7 @@ os.makedirs(EVENT_DIR, exist_ok=True)
 def extract_event_info(email_content):
     # 現在の年度を取得 (4月以降は次の年度)
     current_year = datetime.now().year
-    
+
     """OpenAIを使用してメール内容を解析し、イベント情報を抽出する"""
     client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
@@ -73,6 +73,7 @@ def extract_event_info(email_content):
         event_info = json.loads(content)
         # **日付フォーマットの修正し、年度の記載のない場合には、補完する**
         current_year = datetime.now().year
+
         def fix_date_format(date_str):
             # 日付がYYYY-MM-DD HH:mm形式であることを確認
             match = re.match(
@@ -109,27 +110,31 @@ def extract_event_info(email_content):
     except json.JSONDecodeError:
         return None  # 解析失敗時はNoneを返す
 
+
 def create_ics_file(event_info):
     """イベント情報から .ics ファイルを生成 (JST タイムゾーン対応)"""
     cal = Calendar()
     event = Event()
     event.name = event_info["title"]
-    
+
     # JST (UTC+9) タイムゾーンを指定
     jst = pytz.timezone("Asia/Tokyo")
-    
-    start_time = arrow.get(event_info["start_time"], "YYYY-MM-DD HH:mm").replace(tzinfo=jst)
-    end_time = arrow.get(event_info["end_time"], "YYYY-MM-DD HH:mm").replace(tzinfo=jst)
+
+    start_time = arrow.get(
+        event_info["start_time"], "YYYY-MM-DD HH:mm").replace(tzinfo=jst)
+    end_time = arrow.get(event_info["end_time"],
+                         "YYYY-MM-DD HH:mm").replace(tzinfo=jst)
 
     event.begin = start_time.format("YYYY-MM-DDTHH:mm:ssZZ")  # ISO 8601 フォーマット
     event.end = end_time.format("YYYY-MM-DDTHH:mm:ssZZ")  # ISO 8601 フォーマット
     event.location = event_info["location"]
-    event.description = event_info["description"] 
+    event.description = event_info["description"]
     if "online link" in event_info:
         event.description += "\n" + "オンライン会議のリンク:" + event_info["online link"]
         if "online password" in event_info:
-            event.description += "\n" + "オンライン会議のパスコード:" + event_info["online password"]
-    
+            event.description += "\n" + "オンライン会議のパスコード:" + \
+                event_info["online password"]
+
     cal.events.add(event)
 
     file_name = f"{uuid.uuid4().hex}.ics"
@@ -140,14 +145,15 @@ def create_ics_file(event_info):
 
     return file_path
 
-#gmailからメールを取得
+
+# gmailからメールを取得
 emails = login_and_get_emails()
 
 if emails:
     for idx, email in enumerate(emails, start=1):
         st.write(f"タイトル: {email['Subject']}")
         st.write(f"送信者: {email['From']}")
-        #st.write(f"日付: {email['Date']}")
+        # st.write(f"日付: {email['Date']}")
         st.write(f"サマリ: {email['Snippet']}")
         st.write(f"メール本文: {email['Body']}")
         email_content = json.dumps(email)
@@ -166,7 +172,12 @@ if emails:
                 st.write(f"**📝 説明:** {event_info['description']}")
                 if "online link" in event_info:
                     st.write(f"**🔗 オンラインリンク:** {event_info['online link']}"
-                            f" (パスワード: {event_info.get('online password', 'なし')})")
+                             f" (パスワード: {event_info.get('online password', 'なし')})")
+                    event_info['description'] += "\n" + \
+                        "オンライン会議のリンク:" + event_info["online link"]
+                if "online password" in event_info:
+                    event_info['description'] += "\n" + "オンライン会議のパスコード:" + \
+                        event_info["online password"]
 
                 # .icsファイルの生成
                 ics_path = create_ics_file(event_info)
