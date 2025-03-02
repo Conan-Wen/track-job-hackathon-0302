@@ -1,3 +1,4 @@
+import urllib
 import arrow
 import re
 import streamlit as st
@@ -169,6 +170,34 @@ if emails:
 
             # .icsファイルの生成
             ics_path = create_ics_file(event_info)
+            # Goole カレンダーへのリンク生成
+            title = event_info["title"]
+            description = event_info["description"]
+            location = event_info["location"]
+
+            start_dt = datetime.strptime(
+                event_info["start_time"], "%Y-%m-%d %H:%M")
+            end_dt = datetime.strptime(
+                event_info["end_time"], "%Y-%m-%d %H:%M")
+
+            start_str = start_dt.strftime("%Y%m%dT%H%M%S")
+            end_str = end_dt.strftime("%Y%m%dT%H%M%S")
+
+            params = {
+                "action": "TEMPLATE",
+                "text": title,
+                "dates": f"{start_str}/{end_str}",
+                "location": location,
+                "details": description,
+                "ctz": "Asia/Tokyo"
+            }
+
+            base_url = "https://calendar.google.com/calendar/render"
+            encoded_params = urllib.parse.urlencode(
+                params, quote_via=urllib.parse.quote)
+            google_cal_url = f"{base_url}?{encoded_params}"
+            ###
+            st.write(f"👉 [Google カレンダーに追加]({google_cal_url})")
             st.download_button(
                 label="📥 カレンダーに追加 (.icsファイルをダウンロード)",
                 data=open(ics_path, "rb"),
