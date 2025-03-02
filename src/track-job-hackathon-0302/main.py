@@ -41,14 +41,18 @@ def extract_event_info(email_content):
     - メールにある時間は日本標準時 (JST) です。つまりZ+9です。
     - 年度が省略されている場合の年度は、イベントの日付が現在の日付よりも遅れている場合は{int(current_year)+1}、進んでいる場合は{current_year}としてください。
     - 終了時間が明示されていない場合、開始時間の一時間後としてください。
+    - online linkはURLがオンラインイベントのリンクを指します。それ以外のURLは無視してください。
+    - online passwordはオンラインイベントのパスワードを指します。それ以外のテキストは無視してください。
     - イベントの場合、次のJSONフォーマットで出力してください：
       {{
         "title": "イベント名",
         "start_time": "YYYY-MM-DD HH:MM",
         "end_time": "YYYY-MM-DD HH:MM",
         "location": "イベントの場所",
-        "description": "イベントの説明"
-      }}
+        "description": "イベントの説明",
+        "online link": "イベントのオンラインリンク",
+        "online password": "オンラインイベントのパスワード"
+        }}
     """
 
     response = client.chat.completions.create(
@@ -119,7 +123,11 @@ def create_ics_file(event_info):
     event.begin = start_time.format("YYYY-MM-DDTHH:mm:ssZZ")  # ISO 8601 フォーマット
     event.end = end_time.format("YYYY-MM-DDTHH:mm:ssZZ")  # ISO 8601 フォーマット
     event.location = event_info["location"]
-    event.description = event_info["description"]
+    event.description = event_info["description"] 
+    if "online link" in event_info:
+        event.description += "\n" + "オンライン会議のリンク:" + event_info["online link"]
+        if "online password" in event_info:
+            event.description += "\n" + "オンライン会議のパスコード:" + event_info["online password"]
     
     cal.events.add(event)
 
@@ -148,22 +156,25 @@ if emails:
                 st.write("🔍 イベント情報を解析中...")
                 event_info = extract_event_info(email_content)
 
-                if event_info:
-                    st.success("✅ イベントが検出されました！")
-                    st.write(f"**📌 イベント名:** {event_info['title']}")
-                    st.write(f"**📅 開始時間:** {event_info['start_time']}")
-                    st.write(f"**⏳ 終了時間:** {event_info['end_time']}")
-                    st.write(f"**📍 場所:** {event_info['location']}")
-                    st.write(f"**📝 説明:** {event_info['description']}")
+        if event_info:
+            st.success("✅ イベントが検出されました！")
+            st.write(f"**📌 イベント名:** {event_info['title']}")
+            st.write(f"**📅 開始時間:** {event_info['start_time']}")
+            st.write(f"**⏳ 終了時間:** {event_info['end_time']}")
+            st.write(f"**📍 場所:** {event_info['location']}")
+            st.write(f"**📝 説明:** {event_info['description']}")
+            if "online link" in event_info:
+                st.write(f"**🔗 オンラインリンク:** {event_info['online link']}"
+                         f" (パスワード: {event_info.get('online password', 'なし')})")
 
-                    # .icsファイルの生成
-                    ics_path = create_ics_file(event_info)
-                    st.download_button(
-                        label="📥 カレンダーに追加 (.icsファイルをダウンロード)",
-                        data=open(ics_path, "rb"),
-                        file_name="event.ics",
-                        mime="text/calendar"
-                    )
-                else:
-                    st.error("❌ イベントが見つかりませんでした。")
+            # .icsファイルの生成
+            ics_path = create_ics_file(event_info)
+            st.download_button(
+                label="📥 カレンダーに追加 (.icsファイルをダウンロード)",
+                data=open(ics_path, "rb"),
+                file_name="event.ics",
+                mime="text/calendar"
+            )
+        else:
+            st.error("❌ イベントが見つかりませんでした。")
         st.write("---")
