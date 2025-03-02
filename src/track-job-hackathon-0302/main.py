@@ -10,6 +10,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import pytz  # タイムゾーンを扱うライブラリ
 from ics import Calendar, Event
+from gmail.auth import login_and_get_emails
 
 load_dotenv()
 
@@ -130,35 +131,39 @@ def create_ics_file(event_info):
 
     return file_path
 
-# Streamlit UI
-st.title("📅 メールからイベントを抽出")
+#gmailからメールを取得
+emails = login_and_get_emails()
 
-st.write("📩 メールの内容を入力してください。イベント情報を解析し、カレンダー用の.icsファイルを生成します。")
+if emails:
+    for idx, email in enumerate(emails, start=1):
+        st.write(f"タイトル: {email['Subject']}")
+        st.write(f"送信者: {email['From']}")
+        #st.write(f"日付: {email['Date']}")
+        st.write(f"サマリ: {email['Snippet']}")
+        st.write(f"メール本文: {email['Body']}")
+        email_content = json.dumps(email)
 
-email_content = st.text_area("✉️ メール内容を入力", height=200)
+        if st.button("解析を開始", key=idx):
+            if email_content.strip():
+                st.write("🔍 イベント情報を解析中...")
+                event_info = extract_event_info(email_content)
 
-if st.button("解析を開始"):
-    if email_content.strip():
-        st.write("🔍 イベント情報を解析中...")
-        event_info = extract_event_info(email_content)
+                if event_info:
+                    st.success("✅ イベントが検出されました！")
+                    st.write(f"**📌 イベント名:** {event_info['title']}")
+                    st.write(f"**📅 開始時間:** {event_info['start_time']}")
+                    st.write(f"**⏳ 終了時間:** {event_info['end_time']}")
+                    st.write(f"**📍 場所:** {event_info['location']}")
+                    st.write(f"**📝 説明:** {event_info['description']}")
 
-        if event_info:
-            st.success("✅ イベントが検出されました！")
-            st.write(f"**📌 イベント名:** {event_info['title']}")
-            st.write(f"**📅 開始時間:** {event_info['start_time']}")
-            st.write(f"**⏳ 終了時間:** {event_info['end_time']}")
-            st.write(f"**📍 場所:** {event_info['location']}")
-            st.write(f"**📝 説明:** {event_info['description']}")
-
-            # .icsファイルの生成
-            ics_path = create_ics_file(event_info)
-            st.download_button(
-                label="📥 カレンダーに追加 (.icsファイルをダウンロード)",
-                data=open(ics_path, "rb"),
-                file_name="event.ics",
-                mime="text/calendar"
-            )
-        else:
-            st.error("❌ イベントが見つかりませんでした。")
-    else:
-        st.warning("⚠️ メールの内容を入力してください！")
+                    # .icsファイルの生成
+                    ics_path = create_ics_file(event_info)
+                    st.download_button(
+                        label="📥 カレンダーに追加 (.icsファイルをダウンロード)",
+                        data=open(ics_path, "rb"),
+                        file_name="event.ics",
+                        mime="text/calendar"
+                    )
+                else:
+                    st.error("❌ イベントが見つかりませんでした。")
+        st.write("---")
