@@ -71,12 +71,6 @@ def extract_event_info(email_content):
                 r"(\d{4})-(\d{1,2})-(\d{1,2}) (\d{2}):(\d{2})", date_str)
             if match:
                 return date_str  # 形式が正しい場合
-            
-            match = re.match(r"(\d{1,2})-(\d{1,2}) (\d{2}):(\d{2})", date_str)
-            if match:
-                month, day, hour, minute = match.groups()
-                year = current_year if int(month) >= datetime.now().month else current_year + 1
-                return f"{year}-{month.zfill(2)}-{day.zfill(2)} {hour.zfill(2)}:{minute.zfill(2)}"
 
             # `YYYY-MM-15 HH:MM`のような誤った形式を処理
             parts = date_str.split()
