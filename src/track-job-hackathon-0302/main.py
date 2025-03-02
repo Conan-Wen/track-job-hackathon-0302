@@ -157,53 +157,53 @@ if emails:
                 st.write("🔍 イベント情報を解析中...")
                 event_info = extract_event_info(email_content)
 
-        if event_info:
-            st.success("✅ イベントが検出されました！")
-            st.write(f"**📌 イベント名:** {event_info['title']}")
-            st.write(f"**📅 開始時間:** {event_info['start_time']}")
-            st.write(f"**⏳ 終了時間:** {event_info['end_time']}")
-            st.write(f"**📍 場所:** {event_info['location']}")
-            st.write(f"**📝 説明:** {event_info['description']}")
-            if "online link" in event_info:
-                st.write(f"**🔗 オンラインリンク:** {event_info['online link']}"
-                         f" (パスワード: {event_info.get('online password', 'なし')})")
+            if event_info:
+                st.success("✅ イベントが検出されました！")
+                st.write(f"**📌 イベント名:** {event_info['title']}")
+                st.write(f"**📅 開始時間:** {event_info['start_time']}")
+                st.write(f"**⏳ 終了時間:** {event_info['end_time']}")
+                st.write(f"**📍 場所:** {event_info['location']}")
+                st.write(f"**📝 説明:** {event_info['description']}")
+                if "online link" in event_info:
+                    st.write(f"**🔗 オンラインリンク:** {event_info['online link']}"
+                            f" (パスワード: {event_info.get('online password', 'なし')})")
 
-            # .icsファイルの生成
-            ics_path = create_ics_file(event_info)
-            # Goole カレンダーへのリンク生成
-            title = event_info["title"]
-            description = event_info["description"]
-            location = event_info["location"]
+                # .icsファイルの生成
+                ics_path = create_ics_file(event_info)
+                # Goole カレンダーへのリンク生成
+                title = event_info["title"]
+                description = event_info["description"]
+                location = event_info["location"]
 
-            start_dt = datetime.strptime(
-                event_info["start_time"], "%Y-%m-%d %H:%M")
-            end_dt = datetime.strptime(
-                event_info["end_time"], "%Y-%m-%d %H:%M")
+                start_dt = datetime.strptime(
+                    event_info["start_time"], "%Y-%m-%d %H:%M")
+                end_dt = datetime.strptime(
+                    event_info["end_time"], "%Y-%m-%d %H:%M")
 
-            start_str = start_dt.strftime("%Y%m%dT%H%M%S")
-            end_str = end_dt.strftime("%Y%m%dT%H%M%S")
+                start_str = start_dt.strftime("%Y%m%dT%H%M%S")
+                end_str = end_dt.strftime("%Y%m%dT%H%M%S")
 
-            params = {
-                "action": "TEMPLATE",
-                "text": title,
-                "dates": f"{start_str}/{end_str}",
-                "location": location,
-                "details": description,
-                "ctz": "Asia/Tokyo"
-            }
+                params = {
+                    "action": "TEMPLATE",
+                    "text": title,
+                    "dates": f"{start_str}/{end_str}",
+                    "location": location,
+                    "details": description,
+                    "ctz": "Asia/Tokyo"
+                }
 
-            base_url = "https://calendar.google.com/calendar/render"
-            encoded_params = urllib.parse.urlencode(
-                params, quote_via=urllib.parse.quote)
-            google_cal_url = f"{base_url}?{encoded_params}"
-            ###
-            st.write(f"👉 [Google カレンダーに追加]({google_cal_url})")
-            st.download_button(
-                label="📥 カレンダーに追加 (.icsファイルをダウンロード)",
-                data=open(ics_path, "rb"),
-                file_name="event.ics",
-                mime="text/calendar"
-            )
-        else:
-            st.error("❌ イベントが見つかりませんでした。")
+                base_url = "https://calendar.google.com/calendar/render"
+                encoded_params = urllib.parse.urlencode(
+                    params, quote_via=urllib.parse.quote)
+                google_cal_url = f"{base_url}?{encoded_params}"
+                ###
+                st.write(f"👉 [Google カレンダーに追加]({google_cal_url})")
+                st.download_button(
+                    label="📥 カレンダーに追加 (.icsファイルをダウンロード)",
+                    data=open(ics_path, "rb"),
+                    file_name="event.ics",
+                    mime="text/calendar"
+                )
+            else:
+                st.error("❌ イベントが見つかりませんでした。")
         st.write("---")
